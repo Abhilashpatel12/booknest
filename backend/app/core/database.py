@@ -1,4 +1,5 @@
 import psycopg2
+from psycopg2.extras import RealDictCursor
 
 conn = psycopg2.connect(
     host ="localhost",
@@ -7,4 +8,4 @@ conn = psycopg2.connect(
     password = "",
 )
 
-cursor = conn.cursor()
+cursor = conn.cursor(cursor_factory = RealDictCursor)
