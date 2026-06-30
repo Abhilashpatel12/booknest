@@ -1,12 +1,14 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 from app.core.jwt_handler import verify_access_token
-from app.core.database import cursor
+from app.core.database import get_db
+from app.models.user import User
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     payload = verify_access_token(token)
 
     if payload is None:
@@ -23,12 +25,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             detail="Invalid token"
         )
 
-    cursor.execute(
-        "SELECT * FROM users WHERE id = %s",
-        (user_id,)
-    )
-
-    user = cursor.fetchone()
+    user = db.query(User).filter(User.id == user_id).first()
 
     if user is None:
         raise HTTPException(
