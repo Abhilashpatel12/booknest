@@ -1,11 +1,15 @@
-import psycopg2
-from psycopg2.extras import RealDictCursor
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
 
-conn = psycopg2.connect(
-    host ="localhost",
-    database ="booknest",
-    user ="abhi",
-    password = "",
-)
+from app.core.config import DATABASE_URL
 
-cursor = conn.cursor(cursor_factory = RealDictCursor)
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
