@@ -2,6 +2,7 @@ from app.core.dependencies import get_current_user, get_db
 from app.core.activity import log_activity
 from app.core.permissions import check_shelf_permission
 from datetime import datetime, timezone
+import asyncio
 from typing import List, Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.models import User, Book, Shelf, BookStatus, Lending, Activity, ShelfShare, ShareRole
@@ -11,6 +12,7 @@ from app.models import shelf as shelf_models
 from app.models import book as book_models
 from app.crud import shelf as crud_shelf
 from app.api.books import get_book_by_id
+from app.api.websockets import manager
 
 router = APIRouter(prefix="/shelves",tags=["shelves"])
 
@@ -60,6 +62,17 @@ def add_book_to_shelf(shelf_id:int,book_id:int,db:Session=Depends(get_db),curren
     db_shelf.books.append(db_book)
     db.commit()
     db.refresh(db_shelf)
+    
+    ws_msg = {"type": "SHELF_UPDATED", "shelf_id": shelf_id}
+    recipients = [db_shelf.owner_id] + [share.user_id for share in db_shelf.shares]
+    for uid in set(recipients):
+        if uid != current_user.id:
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(manager.send_personal_message(ws_msg, uid))
+            except RuntimeError:
+                asyncio.run(manager.send_personal_message(ws_msg, uid))
+                
     return db_shelf
 
 @router.delete("/{shelf_id}/books/{book_id}",status_code=status.HTTP_204_NO_CONTENT)
@@ -77,4 +90,15 @@ def remove_book_from_shelf(shelf_id:int,book_id:int,db:Session=Depends(get_db),c
         
     db_shelf.books.remove(db_book)
     db.commit()
+    
+    ws_msg = {"type": "SHELF_UPDATED", "shelf_id": shelf_id}
+    recipients = [db_shelf.owner_id] + [share.user_id for share in db_shelf.shares]
+    for uid in set(recipients):
+        if uid != current_user.id:
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(manager.send_personal_message(ws_msg, uid))
+            except RuntimeError:
+                asyncio.run(manager.send_personal_message(ws_msg, uid))
+                
     return None
