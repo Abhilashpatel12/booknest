@@ -1,6 +1,7 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
 from app.models import User, Book, Shelf, BookStatus, Lending, Activity, ShelfShare, ShareRole
 from app.schemas import BookCreate, BookResponse, BookUpdate, ShelfCreate, ShelfResponse, ShelfUpdate, LendBookRequest, LendingResponse, ShareShelfRequest, UpdateRoleRequest, SharedUserResponse, SignupRequest, LoginRequest, RefreshTokenRequest
+from app.core.jwt_handler import verify_access_token
 from typing import Dict, List
 import json
 
@@ -29,8 +30,15 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/{user_id}")
-async def websocket_endpoint(websocket: WebSocket, user_id: int):
+@router.websocket("")
+async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
+    payload = verify_access_token(token)
+    if not payload or not payload.get("sub"):
+        await websocket.close(code=1008)
+        return
+        
+    user_id = int(payload.get("sub"))
+    
     await manager.connect(websocket, user_id)
     try:
         while True:
