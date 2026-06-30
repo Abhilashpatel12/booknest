@@ -73,3 +73,18 @@ app/
 FastAPI automatically generates interactive API documentation. Once the server is running, you can access:
 - **Swagger UI**: `http://127.0.0.1:8000/docs`
 - **ReDoc**: `http://127.0.0.1:8000/redoc`
+
+## WebSocket Architecture & Security
+
+We use native WebSockets for real-time updates. Polling is not used. 
+
+**Authentication & Security:**
+Native `WebSocket` connections in browsers do not support custom HTTP headers (like `Authorization: Bearer`). To secure the socket, the client must pass the JWT access token as a query parameter: `ws://127.0.0.1:8000/ws?token=<access_token>`. The server decodes and verifies this token; if invalid, it drops the connection immediately with code `1008 Policy Violation`.
+
+**Event Scoping:**
+The server maintains an in-memory dictionary (`ConnectionManager`) of active connections mapped by `user_id`. Events are strictly scoped and never broadcast globally:
+- **Lending:** When a book is lent or returned, a targeted event is dispatched explicitly to the lender and the borrower.
+- **Shelves:** When a shared shelf is updated, the server queries the database for all collaborators (the owner + all users with shared roles on that shelf) and dispatches the update exclusively to them.
+
+**Disconnect Handling:**
+Clients must handle socket drops gracefully. The app should continue to function via standard REST calls (and manual refreshes). The frontend should attach an `onclose` listener to the socket and attempt to reconnect using exponential backoff. Upon successful reconnection, the client should fetch the latest state via REST to ensure no events were missed during the downtime.
