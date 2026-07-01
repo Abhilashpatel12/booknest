@@ -22,7 +22,7 @@ def share_shelf(shelf_id: int, request: ShareShelfRequest, db: Session = Depends
         raise HTTPException(status_code=404, detail="Shelf not found")
 
     
-    target_user = db.query(User).filter(User.email == request.email).first()
+    target_user = db.query(User).filter(User.email == request.email.lower()).first()
     if not target_user:
         raise HTTPException(status_code=404, detail="User not found")
 

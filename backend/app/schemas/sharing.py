@@ -8,9 +8,16 @@ class ShareShelfRequest(BaseModel):
 class UpdateRoleRequest(BaseModel):
     role: ShareRole
 
+class UserBasicResponse(BaseModel):
+    id: int
+    name: str
+    email: EmailStr
+    
+    model_config = ConfigDict(from_attributes=True)
+
 class SharedUserResponse(BaseModel):
     id: int
-    email: str
+    user: UserBasicResponse
     role: ShareRole
 
     model_config = ConfigDict(from_attributes=True)

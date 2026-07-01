@@ -12,11 +12,14 @@ class ShelfCreate(ShelfBase):
 class ShelfUpdate(BaseModel):
     name: Optional[str] = None
 
+from app.schemas.sharing import SharedUserResponse
+
 class ShelfResponse(ShelfBase):
     id: int
     owner_id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
     books: List[BookResponse] = []
+    shares: List[SharedUserResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

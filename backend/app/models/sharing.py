@@ -1,6 +1,7 @@
 import enum
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, Enum as SAEnum
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 class ShareRole(str, enum.Enum):
@@ -15,3 +16,5 @@ class ShelfShare(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     role = Column(SAEnum(ShareRole), nullable=False, default=ShareRole.viewer)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    user = relationship("User")
