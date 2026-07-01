@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, ConfigDict
+from app.schemas.book import BookResponse
 
 class LendBookRequest(BaseModel):
     borrower_email: EmailStr
@@ -15,12 +16,6 @@ class LendingUser(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
-class LendingBook(BaseModel):
-    id: int
-    title: str
-
-    model_config = ConfigDict(from_attributes=True)
-
 class LendingResponse(BaseModel):
     id: int
     book_id: int
@@ -30,7 +25,7 @@ class LendingResponse(BaseModel):
     returned_at: Optional[datetime]
     is_active: bool
     
-    book: LendingBook
+    book: BookResponse
     lender: LendingUser
     borrower: LendingUser
 
