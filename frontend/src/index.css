@@ -245,3 +245,51 @@ select.input-field option {
 .mb-6 { margin-bottom: 32px; }
 .text-center { text-align: center; }
 .w-full { width: 100%; }
+
+/* Layout Responsiveness */
+.layout-wrapper {
+  display: flex;
+  height: 100vh;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.layout-sidebar {
+  width: 100%;
+  background: var(--surface-color);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.layout-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.layout-scroll-area {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+@media (min-width: 768px) {
+  .layout-wrapper {
+    flex-direction: row;
+  }
+  
+  .layout-sidebar {
+    width: 260px;
+    border-right: 1px solid var(--border-color);
+    border-bottom: none;
+  }
+  
+  .layout-scroll-area {
+    padding: 32px;
+  }
+}

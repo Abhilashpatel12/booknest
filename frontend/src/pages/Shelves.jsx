@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Users, Folder, X, Eye } from 'lucide-react';
+import { Plus, Trash2, Users, Folder, X, Eye, Check } from 'lucide-react';
 import ConfirmModal from '../components/ConfirmModal';
 import api from '../api';
 
@@ -14,6 +14,7 @@ export default function Shelves() {
   const [shareError, setShareError] = useState(null);
   const [shareSuccess, setShareSuccess] = useState(null);
   const [confirmConfig, setConfirmConfig] = useState({ isOpen: false, shelfId: null });
+  const [modifiedRoles, setModifiedRoles] = useState({});
 
   const { data: shelves, isLoading, isError: isShelvesError, error: shelvesError } = useQuery({
     queryKey: ['shelves'],
@@ -58,6 +59,7 @@ export default function Shelves() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelves'] });
       setGlobalError(null);
+      setIsShareModalOpen(false);
     },
     onError: (err) => setGlobalError(err.response?.data?.detail || 'Error updating role. You may not have permission.')
   });
@@ -67,6 +69,7 @@ export default function Shelves() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelves'] });
       setGlobalError(null);
+      setIsShareModalOpen(false);
     },
     onError: (err) => setGlobalError(err.response?.data?.detail || 'Error removing user. You may not have permission.')
   });
@@ -119,7 +122,7 @@ export default function Shelves() {
                 <button onClick={() => navigate(`/shelves/${shelf.id}`)} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer' }} title="View Books">
                   <Eye size={16} />
                 </button>
-                <button onClick={() => { setActiveShelf(shelf); setIsShareModalOpen(true); setShareError(null); setShareSuccess(null); }} style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer' }} title="Share Shelf">
+                <button onClick={() => { setActiveShelf(shelf); setIsShareModalOpen(true); setShareError(null); setShareSuccess(null); setModifiedRoles({}); }} style={{ background: 'none', border: 'none', color: 'var(--secondary)', cursor: 'pointer' }} title="Share Shelf">
                   <Users size={16} />
                 </button>
                 <button onClick={() => setConfirmConfig({ isOpen: true, shelfId: shelf.id })} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer' }}>
@@ -211,13 +214,23 @@ export default function Shelves() {
                         <select 
                           className="input-field" 
                           style={{ width: '100px', padding: '6px 28px 6px 10px', fontSize: '13px' }}
-                          value={share.role}
-                          onChange={(e) => updateRoleMutation.mutate({ shareId: share.id, role: e.target.value })}
+                          value={modifiedRoles[share.id] || share.role}
+                          onChange={(e) => setModifiedRoles({...modifiedRoles, [share.id]: e.target.value})}
                           disabled={updateRoleMutation.isPending}
                         >
                           <option value="viewer">Viewer</option>
                           <option value="editor">Editor</option>
                         </select>
+                        {modifiedRoles[share.id] && modifiedRoles[share.id] !== share.role && (
+                          <button 
+                            onClick={() => updateRoleMutation.mutate({ shareId: share.id, role: modifiedRoles[share.id] || share.role })} 
+                            disabled={updateRoleMutation.isPending}
+                            style={{ background: 'none', border: 'none', color: 'var(--success)', cursor: 'pointer', padding: '4px' }}
+                            title="Save role"
+                          >
+                            <Check size={16} />
+                          </button>
+                        )}
                         <button 
                           onClick={() => removeShareMutation.mutate(share.id)} 
                           disabled={removeShareMutation.isPending}

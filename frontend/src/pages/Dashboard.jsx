@@ -39,7 +39,7 @@ export default function Dashboard() {
         <p style={{ color: 'var(--text-muted)' }}>Welcome back! Here's what's happening with your books.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px', marginBottom: '40px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))', gap: '24px', marginBottom: '40px' }}>
         {statCards.map((stat, i) => {
           const Icon = stat.icon;
           return (
@@ -48,15 +48,16 @@ export default function Dashboard() {
                 width: '48px', height: '48px', borderRadius: '12px', 
                 background: `color-mix(in srgb, ${stat.color} 15%, transparent)`,
                 color: stat.color,
-                display: 'flex', alignItems: 'center', justifyContent: 'center'
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0
               }}>
                 <Icon size={24} />
               </div>
-              <div>
-                <div style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ color: 'var(--text-muted)', fontSize: '14px', fontWeight: '500', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {stat.title}
                 </div>
-                <div style={{ fontSize: '24px', fontWeight: '700' }}>
+                <div style={{ fontSize: '24px', fontWeight: '700', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                   {stat.value}
                 </div>
               </div>
@@ -84,10 +85,10 @@ export default function Dashboard() {
               }}>
                 <div style={{ 
                   width: '8px', height: '8px', borderRadius: '50%', 
-                  background: 'var(--primary)', marginTop: '6px' 
+                  background: 'var(--primary)', marginTop: '6px', flexShrink: 0 
                 }} />
-                <div>
-                  <div style={{ fontSize: '14px', color: 'var(--text-main)', marginBottom: '4px' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '14px', color: 'var(--text-main)', marginBottom: '4px', wordBreak: 'break-word' }}>
                     {activity.description}
                   </div>
                   <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>

@@ -23,15 +23,9 @@ export default function Layout() {
   ];
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh' }}>
+    <div className="layout-wrapper">
       {/* Sidebar */}
-      <div style={{ 
-        width: '260px', 
-        background: 'var(--surface-color)', 
-        borderRight: '1px solid var(--border-color)',
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
+      <div className="layout-sidebar">
         <div style={{ padding: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ background: 'var(--primary)', padding: '8px', borderRadius: '8px', display: 'flex' }}>
             <Book size={24} color="var(--bg-color)" />
@@ -92,8 +86,10 @@ export default function Layout() {
       </div>
       
       {/* Main Content */}
-      <div style={{ flex: 1, padding: '32px', overflowY: 'auto' }}>
-        <Outlet />
+      <div className="layout-main">
+        <div className="layout-scroll-area">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
