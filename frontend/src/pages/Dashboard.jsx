@@ -1,17 +1,21 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Book, CheckCircle, Clock, Link2, Activity as ActivityIcon } from 'lucide-react';
+import { Book, CheckCircle, Clock, Link2, Activity as ActivityIcon, Users, Library } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import api from '../api';
 
 export default function Dashboard() {
-  const { data: dashboardData } = useQuery({
+  const { data: dashboardData, isError, error } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       const { data } = await api.get('/dashboard/stats');
       return data;
     }
   });
+
+  if (isError) {
+    return <div className="error-text animate-fade-in" style={{ padding: '24px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>Failed to load dashboard data. {error?.message || 'Please try again.'}</div>;
+  }
 
   if (dashboardData === undefined) {
     return <div className="animate-fade-in" style={{ color: 'var(--text-muted)' }}>Loading dashboard...</div>;
@@ -21,9 +25,11 @@ export default function Dashboard() {
 
   const statCards = [
     { title: 'Total Books', value: dashboardData.total_books || 0, icon: Book, color: 'var(--primary)' },
-    { title: 'Finished', value: dashboardData.finished || 0, icon: CheckCircle, color: 'var(--success)' },
+    { title: 'Finished This Year', value: dashboardData.finished_this_year || 0, icon: CheckCircle, color: 'var(--success)' },
     { title: 'Currently Reading', value: dashboardData.reading || 0, icon: Clock, color: 'var(--warning)' },
     { title: 'Books Lent', value: dashboardData.books_currently_lent || 0, icon: Link2, color: 'var(--secondary)' },
+    { title: 'Shared Shelves', value: dashboardData.shelves_shared_with_me || 0, icon: Users, color: '#3b82f6' },
+    { title: 'Top Shelf', value: dashboardData.shelf_with_most_books || 'None', icon: Library, color: '#8b5cf6' },
   ];
 
   return (

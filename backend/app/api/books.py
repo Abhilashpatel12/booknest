@@ -5,6 +5,7 @@ from typing import List, Optional, Literal
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from app.models import User, Book, Shelf, BookStatus, Lending, Activity, ShelfShare, ShareRole
 from app.schemas import BookCreate, BookResponse, BookUpdate, ShelfCreate, ShelfResponse, ShelfUpdate, LendBookRequest, LendingResponse, ShareShelfRequest, UpdateRoleRequest, SharedUserResponse, SignupRequest, LoginRequest, RefreshTokenRequest
+from app.schemas.book import PaginatedBookResponse
 from sqlalchemy.orm import Session
 from app.crud import book as crud_book
 
@@ -21,7 +22,7 @@ def create_book(book: BookCreate, db: Session = Depends(get_db), current_user: U
     
     return new_book
 
-@router.get("/",response_model=List[BookResponse]) 
+@router.get("/",response_model=PaginatedBookResponse) 
 def get_books(
     db: Session = Depends(get_db), 
     current_user: User = Depends(get_current_user),
@@ -32,7 +33,7 @@ def get_books(
     limit: int = Query(20, ge=1, le=100)
 ):
     skip = (page - 1) * limit
-    return crud_book.get_multi_filtered(
+    books, total = crud_book.get_multi_filtered(
         db=db,
         owner_id=current_user.id,
         skip=skip,
@@ -41,6 +42,14 @@ def get_books(
         search=search,
         sort_by=sort_by
     )
+    import math
+    total_pages = math.ceil(total / limit) if total > 0 else 1
+    return {
+        "items": books,
+        "total": total,
+        "page": page,
+        "pages": total_pages
+    }
 
 @router.get("/{book_id}",response_model=BookResponse)
 def get_book_by_id(book_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -58,8 +67,12 @@ def update_book(book_id: int, book_update: BookUpdate, db: Session = Depends(get
     if db_book is None:
         raise HTTPException(status_code=404, detail="book not found")
         
+    old_status = db_book.status
     try:
-        return crud_book.update(db=db, db_obj=db_book, obj_in=book_update)
+        updated_book = crud_book.update(db=db, db_obj=db_book, obj_in=book_update)
+        if updated_book.status != old_status:
+            log_activity(db, current_user.id, "STATUS_CHANGED", f"Changed status of '{updated_book.title}' to {updated_book.status.value}")
+        return updated_book
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 

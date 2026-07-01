@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field
 from app.models.book import BookStatus
@@ -33,3 +33,9 @@ class BookResponse(BookBase):
     updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+class PaginatedBookResponse(BaseModel):
+    items: List[BookResponse]
+    total: int
+    page: int
+    pages: int

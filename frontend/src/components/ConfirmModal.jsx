@@ -8,14 +8,15 @@ export default function ConfirmModal({
   onConfirm, 
   onCancel, 
   confirmText = 'Confirm', 
-  isDanger = true 
+  isDanger = true,
+  isLoading = false 
 }) {
   if (!isOpen) return null;
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, backdropFilter: 'blur(4px)' }}>
       <div className="glass-panel animate-fade-in" style={{ padding: '32px', width: '100%', maxWidth: '400px', position: 'relative' }}>
-        <button onClick={onCancel} style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+        <button onClick={onCancel} disabled={isLoading} style={{ position: 'absolute', top: '24px', right: '24px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: isLoading ? 'not-allowed' : 'pointer' }}>
           <X size={20} />
         </button>
         
@@ -29,14 +30,15 @@ export default function ConfirmModal({
         </p>
 
         <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
-          <button className="btn btn-secondary" onClick={onCancel}>
+          <button className="btn btn-secondary" onClick={onCancel} disabled={isLoading}>
             Cancel
           </button>
           <button 
             className={`btn ${isDanger ? 'btn-danger' : 'btn-primary'}`} 
-            onClick={() => { onConfirm(); onCancel(); }}
+            onClick={() => { onConfirm(); }}
+            disabled={isLoading}
           >
-            {confirmText}
+            {isLoading ? 'Processing...' : confirmText}
           </button>
         </div>
       </div>

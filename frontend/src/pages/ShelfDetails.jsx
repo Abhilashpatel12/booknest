@@ -13,7 +13,7 @@ export default function ShelfDetails() {
   const [actionError, setActionError] = useState(null);
   const [viewingBook, setViewingBook] = useState(null);
 
-  const { data: shelf } = useQuery({
+  const { data: shelf, isError: isShelfError, error: shelfError } = useQuery({
     queryKey: ['shelf', parseInt(id)],
     queryFn: async () => {
       const { data } = await api.get(`/shelves/${id}`);
@@ -21,11 +21,11 @@ export default function ShelfDetails() {
     }
   });
 
-  const { data: myBooks } = useQuery({
+  const { data: myBooks, isError: isBooksError, error: booksError } = useQuery({
     queryKey: ['myBooksForShelf'],
     queryFn: async () => {
       const { data } = await api.get('/books/?limit=100');
-      return data;
+      return data.items || [];
     }
   });
 
@@ -50,6 +50,10 @@ export default function ShelfDetails() {
     },
     onError: (err) => setActionError(err.response?.data?.detail || 'Error removing book. You might not have permission.')
   });
+
+  if (isShelfError || isBooksError) {
+    return <div className="error-text animate-fade-in" style={{ padding: '24px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', marginBottom: '24px' }}>Failed to load shelf details. {shelfError?.message || booksError?.message || 'Please try again.'}</div>;
+  }
 
   if (shelf === undefined || myBooks === undefined) {
     return <div className="animate-fade-in" style={{ color: 'var(--text-muted)' }}>Loading shelf details...</div>;

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union, Tuple
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from fastapi import HTTPException, status
@@ -17,7 +17,7 @@ class CRUDBook(CRUDBase[Book, BookCreate, BookUpdate]):
         book_status: Optional[BookStatus] = None,
         search: Optional[str] = None,
         sort_by: Literal["rating", "title", "date_added"] = "date_added"
-    ) -> List[Book]:
+    ) -> Tuple[List[Book], int]:
         query = db.query(self.model).filter(self.model.owner_id == owner_id)
         
         if book_status:
@@ -25,6 +25,7 @@ class CRUDBook(CRUDBase[Book, BookCreate, BookUpdate]):
         if search:
             search_term = f"%{search}%"
             query = query.filter((self.model.title.ilike(search_term) | self.model.author.ilike(search_term)))
+        total = query.count()
             
         if sort_by == "rating":
             query = query.order_by(self.model.rating.desc())
@@ -33,7 +34,7 @@ class CRUDBook(CRUDBase[Book, BookCreate, BookUpdate]):
         else:
             query = query.order_by(self.model.created_at.desc())
             
-        return query.offset(skip).limit(limit).all()
+        return query.offset(skip).limit(limit).all(), total
 
     def update(
         self,

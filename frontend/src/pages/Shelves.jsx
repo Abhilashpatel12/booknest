@@ -15,7 +15,7 @@ export default function Shelves() {
   const [shareSuccess, setShareSuccess] = useState(null);
   const [confirmConfig, setConfirmConfig] = useState({ isOpen: false, shelfId: null });
 
-  const { data: shelves, isLoading } = useQuery({
+  const { data: shelves, isLoading, isError: isShelvesError, error: shelvesError } = useQuery({
     queryKey: ['shelves'],
     queryFn: async () => {
       const { data } = await api.get('/shelves/');
@@ -23,7 +23,7 @@ export default function Shelves() {
     }
   });
 
-  const { data: sharedShelves } = useQuery({
+  const { data: sharedShelves, isError: isSharedError, error: sharedError } = useQuery({
     queryKey: ['sharedShelves'],
     queryFn: async () => {
       const { data } = await api.get('/sharing/shared-with-me');
@@ -47,6 +47,7 @@ export default function Shelves() {
     mutationFn: (id) => api.delete(`/shelves/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['shelves'] });
+      setConfirmConfig({ isOpen: false, shelfId: null });
       setGlobalError(null);
     },
     onError: (err) => setGlobalError(err.response?.data?.detail || 'Error deleting shelf. You may not have permission.')
@@ -82,6 +83,7 @@ export default function Shelves() {
     onError: (err) => setShareError(err.response?.data?.detail || 'Error sharing shelf')
   });
 
+  if (isShelvesError) return <div className="error-text animate-fade-in" style={{ padding: '24px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', marginBottom: '24px' }}>Failed to load shelves. {shelvesError?.message || 'Please try again.'}</div>;
   if (shelves === undefined) return <div className="animate-fade-in" style={{ color: 'var(--text-muted)' }}>Loading shelves...</div>;
 
   return (
@@ -133,7 +135,9 @@ export default function Shelves() {
       </div>
 
       <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '16px' }}>Shared with me</h2>
-      {sharedShelves?.length === 0 ? (
+      {isSharedError ? (
+        <div className="error-text animate-fade-in" style={{ padding: '24px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>Failed to load shared shelves. {sharedError?.message || 'Please try again.'}</div>
+      ) : sharedShelves?.length === 0 ? (
         <div className="glass-panel" style={{ padding: '24px', color: 'var(--text-muted)', textAlign: 'center' }}>
           No shelves shared with you yet.
         </div>
@@ -260,6 +264,7 @@ export default function Shelves() {
         title="Delete Shelf"
         message="Are you sure you want to delete this shelf? The books will remain in your library."
         confirmText="Delete"
+        isLoading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate(confirmConfig.shelfId)}
         onCancel={() => setConfirmConfig({ isOpen: false, shelfId: null })}
       />

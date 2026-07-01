@@ -13,10 +13,11 @@ export default function Books() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBook, setEditingBook] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   const [confirmConfig, setConfirmConfig] = useState({ isOpen: false, bookId: null });
   
-  const { data: books, isLoading } = useQuery({
+  const { data: books, isLoading, isError, error } = useQuery({
     queryKey: ['books', { page, search, status, sortBy }],
     queryFn: async () => {
       const params = new URLSearchParams({
@@ -35,7 +36,10 @@ export default function Books() {
 
   const deleteMutation = useMutation({
     mutationFn: (id) => api.delete(`/books/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['books'] })
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['books'] });
+      setConfirmConfig({ isOpen: false, bookId: null });
+    }
   });
 
   const saveMutation = useMutation({
@@ -49,11 +53,15 @@ export default function Books() {
       queryClient.invalidateQueries({ queryKey: ['books'] });
       queryClient.invalidateQueries({ queryKey: ['dashboardStats'] });
       closeModal();
+    },
+    onError: (err) => {
+      setFormError(err.response?.data?.detail || 'Failed to save book. Please try again.');
     }
   });
 
   const openModal = (book = null) => {
     setEditingBook(book);
+    setFormError(null);
     setIsModalOpen(true);
   };
 
@@ -111,15 +119,19 @@ export default function Books() {
       </div>
 
       {/* Book List */}
-      {isLoading ? (
+      {isError ? (
+        <div className="error-text animate-fade-in" style={{ padding: '24px', textAlign: 'center', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px' }}>
+          Failed to load books. {error?.message || 'Please try again.'}
+        </div>
+      ) : isLoading ? (
         <div style={{ color: 'var(--text-muted)' }}>Loading books...</div>
-      ) : books?.length === 0 ? (
+      ) : books?.items?.length === 0 ? (
         <div className="glass-panel" style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
           No books found matching your criteria.
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-          {books?.map(book => (
+          {books?.items?.map(book => (
             <div key={book.id} className="glass-panel" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <h3 style={{ fontSize: '18px', fontWeight: '600', lineHeight: 1.2 }}>{book.title}</h3>
@@ -151,8 +163,8 @@ export default function Books() {
       {/* Pagination */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', marginTop: '32px' }}>
         <button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</button>
-        <span style={{ alignSelf: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>Page {page}</span>
-        <button className="btn btn-secondary" disabled={!books || books.length < 20} onClick={() => setPage(p => p + 1)}>Next</button>
+        <span style={{ alignSelf: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>Page {page} of {books?.pages || 1}</span>
+        <button className="btn btn-secondary" disabled={!books || page >= books.pages} onClick={() => setPage(p => p + 1)}>Next</button>
       </div>
 
       {/* Modal for Add/Edit */}
@@ -165,14 +177,26 @@ export default function Books() {
             <h2 style={{ fontSize: '20px', fontWeight: '600', marginBottom: '24px' }}>
               {editingBook ? 'Edit Book' : 'Add New Book'}
             </h2>
+            {formError && (
+              <div className="error-text animate-fade-in" style={{ marginBottom: '16px', padding: '10px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '8px', fontSize: '14px' }}>
+                {formError}
+              </div>
+            )}
             <form onSubmit={(e) => {
               e.preventDefault();
+              setFormError(null);
               const fd = new FormData(e.target);
               const data = Object.fromEntries(fd.entries());
               data.total_pages = parseInt(data.total_pages, 10);
               data.current_page = parseInt(data.current_page || 0, 10);
               if (data.rating) data.rating = parseInt(data.rating, 10);
               else delete data.rating;
+              
+              if (data.current_page > data.total_pages) {
+                setFormError("Current page cannot exceed total pages.");
+                return;
+              }
+              
               saveMutation.mutate(data);
             }}>
               <div className="input-group">
@@ -214,6 +238,7 @@ export default function Books() {
         title="Delete Book"
         message="Are you sure you want to delete this book? This action cannot be undone."
         confirmText="Delete"
+        isLoading={deleteMutation.isPending}
         onConfirm={() => deleteMutation.mutate(confirmConfig.bookId)}
         onCancel={() => setConfirmConfig({ isOpen: false, bookId: null })}
       />
