@@ -2,6 +2,9 @@
 
 Booknest is a modern, collaborative personal library management application. It allows users to track their reading progress, organize books into custom shelves, share those shelves with friends using granular permissions (Viewer or Editor), and even lend books to other users. Real-time updates ensure that when a friend adds a book to a shared shelf or returns a lent book, your dashboard updates instantly without refreshing the page.
 
+### 🚀 Live Deployment
+The application is successfully deployed and accessible at: **[https://booknest-gold-eight.vercel.app/](https://booknest-gold-eight.vercel.app/)**
+
 ---
 
 ## How to Run It (Clean-Clone Tested)
