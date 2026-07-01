@@ -55,11 +55,16 @@ The application revolves around six core entities:
 * **Activities**: An append-only audit log tracking major events (e.g., "Returned a book", "Added book to shelf").
 
 ### Relationships Diagram
-```text
-User 1 --< Books >-- Lending --< User 2
-  |          |                      
-  ^          v                      
-Shelves >- ShelfShares -< User 2    
+```mermaid
+erDiagram
+    USERS ||--o{ BOOKS : "owns"
+    USERS ||--o{ SHELVES : "creates"
+    USERS ||--o{ ACTIVITIES : "performs"
+    USERS ||--o{ SHELF_SHARES : "invited to"
+    USERS ||--o{ LENDING : "borrows / lends"
+    BOOKS ||--o{ LENDING : "is lent via"
+    SHELVES ||--o{ SHELF_SHARES : "has"
+    SHELVES }o--o{ BOOKS : "contains"
 ```
 
 ---
@@ -124,5 +129,5 @@ During testing, sharing shelves occasionally failed with a cryptic `404 User Not
 ## AI Usage
 
 I utilized AI to accelerate development in two specific areas:
-1. **Frontend Styling**: I prompted the AI to overhaul the standard UI into a "premium, dark-mode Notion-style aesthetic with glassmorphism." The AI effectively generated the custom CSS properties and grid layouts. I learned how heavily relying on CSS root variables makes dark-mode generation vastly more predictable.
+1. **Frontend Styling**: I prompted the AI to assist with the UI changes and styling of the components. The AI effectively generated the custom CSS properties and grid layouts. I learned how heavily relying on CSS root variables makes design updates vastly more predictable.
 2. **Backend API Testing**: I instructed the AI to generate a comprehensive Pytest integration suite using FastAPI's `TestClient`. I explicitly constrained the AI to avoid hardcoded URLs. Observing the generated test suite taught me how to properly use dependency injection and fixtures to simulate multi-user lending flows entirely in-memory without hitting an actual network layer.
