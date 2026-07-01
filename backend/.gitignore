@@ -1,0 +1,17 @@
+# Database
+*.db
+*.sqlite3
+
+# Logs
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+.env
+
+# MacOS
+.DS_Store
