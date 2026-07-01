@@ -104,7 +104,7 @@ If a malicious actor tries to bypass the UI and hit `DELETE /shelves/{id}/books/
 ## WebSocket Setup
 
 1. **Authentication**: WebSockets cannot rely on HTTP Authorization headers natively in browser APIs. Instead, the frontend connects by appending the JWT as a query parameter: `ws://.../ws?token=<token>`. The backend validates this token before accepting the connection.
-2. **Targeted Delivery**: The backend `ConnectionManager` maps the active WebSocket connection to the user's explicit `user_id`. When a book is lent, the backend executes `send_personal_message(msg, borrower_id)`. The event is **only** dispatched to the specific socket mapped to that ID.
+2. **Targeted Delivery**: The backend `ConnectionManager` maps the active WebSocket connection to the user's explicit `user_id`. To ensure a user only receives events meant for them (their own events plus updates on shelves shared with them), the backend explicitly iterates over the relevant user IDs. For example, when a shared shelf is updated, the backend queries all collaborators (editors and viewers) and dispatches `send_personal_message` exclusively to those specific sockets.
 3. **Disconnects/Reconnects**: If the server restarts or connection drops, the `ws.onclose` event triggers an exponential backoff algorithm in React, attempting to reconnect gracefully (1s, 2s, 4s...) until successful. Once reconnected, React Query automatically invalidates stale caches to fetch missed events.
 
 ---
