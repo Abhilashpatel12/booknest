@@ -12,10 +12,13 @@ router = APIRouter()
 
 @router.post("/signup")
 def signup(user: SignupRequest, db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == user.email).first()
+    existing_user = db.query(User).filter(User.email == user.email.lower()).first()
 
     if existing_user:
-        return {"message":"email already exists"}
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already exists"
+        )
 
     hashed_password = bcrypt.hashpw(
         user.password.encode(),
@@ -24,7 +27,7 @@ def signup(user: SignupRequest, db: Session = Depends(get_db)):
 
     new_user = User(
         name=user.name,
-        email=user.email,
+        email=user.email.lower(),
         password_hash=hashed_password
     )
 
@@ -37,7 +40,7 @@ def signup(user: SignupRequest, db: Session = Depends(get_db)):
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm=Depends(), db: Session = Depends(get_db)):
-    existing_user = db.query(User).filter(User.email == form_data.username).first()
+    existing_user = db.query(User).filter(User.email == form_data.username.lower()).first()
     
     if existing_user is None:
         raise HTTPException(
@@ -73,7 +76,7 @@ def get_me(current_user = Depends(get_current_user)):
 
 @router.post("/refresh")
 def refresh_token(request: RefreshTokenRequest, db: Session = Depends(get_db)):
-    payload = verify_access_token(request.refresh_token)
+    payload = verify_access_token(request.refresh_token, expected_type="refresh")
     if payload is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
