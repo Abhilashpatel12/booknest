@@ -1,4 +1,5 @@
 from app.core.dependencies import get_current_user, get_db
+from app.core.activity import log_activity
 from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.models import User, Book, Shelf, BookStatus, Lending, Activity, ShelfShare, ShareRole
@@ -36,6 +37,8 @@ def share_shelf(shelf_id: int, request: ShareShelfRequest, db: Session = Depends
     share_in = ShelfShareCreate(shelf_id=shelf_id, user_id=target_user.id, role=request.role)
     new_share = crud_shelf_share.create(db=db, obj_in=share_in)
     
+    log_activity(db, current_user.id, "SHELF_SHARED", f"Shared shelf '{db_shelf.name}' with {target_user.name} as {request.role}")
+    
     return {"message": "Shelf shared successfully"}
 
 @router.get("/shared-with-me", response_model=List[ShelfResponse])
@@ -59,6 +62,10 @@ def update_role(share_id: int, request: UpdateRoleRequest, db: Session = Depends
     share.role = request.role
     db.commit()
     db.refresh(share)
+    
+    target_user = db.query(User).filter(User.id == share.user_id).first()
+    log_activity(db, current_user.id, "COLLABORATOR_ROLE_CHANGED", f"Updated {target_user.name}'s role to {request.role} on shelf '{shelf.name}'")
+    
     return {"message": "Role updated successfully"}
 
 @router.delete("/{share_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -72,6 +79,10 @@ def remove_collaborator(share_id: int, db: Session = Depends(get_db), current_us
     if not shelf:
         raise HTTPException(status_code=403, detail="Not authorized to remove collaborators from this shelf")
         
+    target_user = db.query(User).filter(User.id == share.user_id).first()
     db.delete(share)
     db.commit()
+    
+    log_activity(db, current_user.id, "COLLABORATOR_REMOVED", f"Removed {target_user.name} from shelf '{shelf.name}'")
+    
     return None
