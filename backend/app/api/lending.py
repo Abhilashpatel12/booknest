@@ -50,11 +50,7 @@ def lend_book(book_id: int, request: LendBookRequest, db: Session = Depends(get_
     log_activity(db, current_user.id, "BOOK_LENT", f"Lent '{db_book.title}' to {borrower.name}")
     
     ws_msg = {"type": "BOOK_LENT_TO_YOU", "book_id": book_id, "lender_id": current_user.id}
-    try:
-        loop = asyncio.get_running_loop()
-        loop.create_task(manager.send_personal_message(ws_msg, borrower.id))
-    except RuntimeError:
-        asyncio.run(manager.send_personal_message(ws_msg, borrower.id))
+    manager.send_personal_message_sync(ws_msg, borrower.id)
     
     return new_lend
 
@@ -86,11 +82,7 @@ def return_book(lend_id: int, db: Session = Depends(get_db), current_user: User 
     
     other_party_id = lend_record.borrower_id if current_user.id == lend_record.lender_id else lend_record.lender_id
     ws_msg = {"type": "BOOK_RETURNED", "book_id": lend_record.book_id, "lend_id": lend_record.id}
-    try:
-        loop = asyncio.get_running_loop()
-        loop.create_task(manager.send_personal_message(ws_msg, other_party_id))
-    except RuntimeError:
-        asyncio.run(manager.send_personal_message(ws_msg, other_party_id))
+    manager.send_personal_message_sync(ws_msg, other_party_id)
 
     return lend_record
 

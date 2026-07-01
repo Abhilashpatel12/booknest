@@ -4,14 +4,18 @@ from app.schemas import BookCreate, BookResponse, BookUpdate, ShelfCreate, Shelf
 from app.core.jwt_handler import verify_access_token
 from typing import Dict, List
 import json
+import asyncio
 
 router = APIRouter(prefix="/ws", tags=["websockets"])
 
 class ConnectionManager:
     def __init__(self):
         self.active_connections: Dict[int, List[WebSocket]] = {}
+        self.main_loop = None
 
     async def connect(self, websocket: WebSocket, user_id: int):
+        if self.main_loop is None:
+            self.main_loop = asyncio.get_running_loop()
         await websocket.accept()
         if user_id not in self.active_connections:
             self.active_connections[user_id] = []
@@ -35,6 +39,14 @@ class ConnectionManager:
             
             for dead in dead_connections:
                 self.disconnect(dead, user_id)
+
+    def send_personal_message_sync(self, message: dict, user_id: int):
+        try:
+            loop = asyncio.get_running_loop()
+            loop.create_task(self.send_personal_message(message, user_id))
+        except RuntimeError:
+            if getattr(self, "main_loop", None):
+                asyncio.run_coroutine_threadsafe(self.send_personal_message(message, user_id), self.main_loop)
 
 manager = ConnectionManager()
 

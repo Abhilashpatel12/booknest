@@ -67,11 +67,7 @@ def add_book_to_shelf(shelf_id:int,book_id:int,db:Session=Depends(get_db),curren
     recipients = [db_shelf.owner_id] + [share.user_id for share in db_shelf.shares]
     for uid in set(recipients):
         if uid != current_user.id:
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(manager.send_personal_message(ws_msg, uid))
-            except RuntimeError:
-                asyncio.run(manager.send_personal_message(ws_msg, uid))
+            manager.send_personal_message_sync(ws_msg, uid)
                 
     return db_shelf
 
@@ -95,10 +91,6 @@ def remove_book_from_shelf(shelf_id:int,book_id:int,db:Session=Depends(get_db),c
     recipients = [db_shelf.owner_id] + [share.user_id for share in db_shelf.shares]
     for uid in set(recipients):
         if uid != current_user.id:
-            try:
-                loop = asyncio.get_running_loop()
-                loop.create_task(manager.send_personal_message(ws_msg, uid))
-            except RuntimeError:
-                asyncio.run(manager.send_personal_message(ws_msg, uid))
+            manager.send_personal_message_sync(ws_msg, uid)
                 
     return None
