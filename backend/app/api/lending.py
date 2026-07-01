@@ -22,7 +22,7 @@ def lend_book(book_id: int, request: LendBookRequest, db: Session = Depends(get_
         raise HTTPException(status_code=404, detail="Book not found")
 
    
-    borrower = db.query(User).filter(User.email == request.borrower_email).first()
+    borrower = db.query(User).filter(User.email == request.get_email()).first()
     if not borrower:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -96,6 +96,16 @@ def return_book(lend_id: int, db: Session = Depends(get_db), current_user: User 
 
 @router.get("/borrowed", response_model=List[LendingResponse])
 def get_borrowed_books(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    
-    records = db.query(Lending).filter(Lending.borrower_id == current_user.id).all()
+    records = db.query(Lending).filter(
+        Lending.borrower_id == current_user.id,
+        Lending.is_active == True
+    ).all()
+    return records
+
+@router.get("/lent", response_model=List[LendingResponse])
+def get_lent_books(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    records = db.query(Lending).filter(
+        Lending.lender_id == current_user.id,
+        Lending.is_active == True
+    ).all()
     return records

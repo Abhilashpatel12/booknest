@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, DateTime, ForeignKey, Boolean
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.core.database import Base
 
@@ -12,3 +13,7 @@ class Lending(Base):
     borrowed_at = Column(DateTime(timezone=True), server_default=func.now())
     returned_at = Column(DateTime(timezone=True), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
+
+    book = relationship("Book", backref="lendings")
+    lender = relationship("User", foreign_keys=[lender_id])
+    borrower = relationship("User", foreign_keys=[borrower_id])

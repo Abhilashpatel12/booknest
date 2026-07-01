@@ -19,20 +19,28 @@ class ConnectionManager:
 
     def disconnect(self, websocket: WebSocket, user_id: int):
         if user_id in self.active_connections:
-            self.active_connections[user_id].remove(websocket)
+            if websocket in self.active_connections[user_id]:
+                self.active_connections[user_id].remove(websocket)
             if not self.active_connections[user_id]:
                 del self.active_connections[user_id]
 
     async def send_personal_message(self, message: dict, user_id: int):
         if user_id in self.active_connections:
+            dead_connections = []
             for connection in self.active_connections[user_id]:
-                await connection.send_text(json.dumps(message))
+                try:
+                    await connection.send_text(json.dumps(message))
+                except Exception:
+                    dead_connections.append(connection)
+            
+            for dead in dead_connections:
+                self.disconnect(dead, user_id)
 
 manager = ConnectionManager()
 
 @router.websocket("")
 async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
-    payload = verify_access_token(token)
+    payload = verify_access_token(token, expected_type="access")
     if not payload or not payload.get("sub"):
         await websocket.close(code=1008)
         return
@@ -43,5 +51,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...)):
     try:
         while True:
             data = await websocket.receive_text()
-    except WebSocketDisconnect:
+    except Exception:
+        pass
+    finally:
         manager.disconnect(websocket, user_id)
