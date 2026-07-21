@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 
-export default function Signup() {
+export default function Register() {
   const { signup } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState('');
@@ -80,7 +80,7 @@ export default function Signup() {
             </p>
           </div>
           <button type="submit" className="btn btn-primary w-full" disabled={isLoading}>
-            {isLoading ? 'Creating account...' : 'Sign Up'}
+            {isLoading ? 'Creating account...' : 'Register'}
           </button>
         </form>
         <p style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: 'var(--text-muted)' }}>

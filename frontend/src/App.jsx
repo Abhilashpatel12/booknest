@@ -6,7 +6,7 @@ import { WebSocketProvider } from './context/WebSocketContext';
 
 // Pages
 import Login from './pages/Login';
-import Signup from './pages/Signup';
+import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Books from './pages/Books';
 import Shelves from './pages/Shelves';
@@ -43,7 +43,7 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
-      <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
+      <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
       
       <Route path="/" element={<ProtectedRoute><Layout /></ProtectedRoute>}>
         <Route index element={<Dashboard />} />
